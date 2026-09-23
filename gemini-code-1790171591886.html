@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emulador NES / SNES</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            max-width: 850px;
+            width: 100%;
+        }
+        h2 { margin-bottom: 5px; color: #e52521; }
+        p.subtitle { color: #aaa; margin-bottom: 15px; font-size: 0.9rem; }
+        
+        .btn {
+            background-color: #e52521;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: #b81b18; }
+        input[type="file"] { display: none; }
+
+        #game-area {
+            width: 100%;
+            height: 480px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #333;
+            margin-bottom: 20px;
+        }
+
+        /* Guía de Controles */
+        .controls-panel {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            border: 1px solid #333;
+        }
+        .controls-panel h3 {
+            margin-bottom: 15px;
+            color: #ffcc00;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .controls-grid { grid-template-columns: 1fr; }
+        }
+        .console-box {
+            background: #282828;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .console-box h4 {
+            color: #fff;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.88rem;
+            color: #ccc;
+        }
+        .key {
+            background: #444;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            border: 1px solid #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Emulador NES & Super Nintendo</h2>
+    <p class="subtitle">Soporta juegos .nes, .sfc y .smc</p>
+    
+    <label class="btn" for="rom-file">Cargar juego (.nes / .sfc)</label>
+    <input type="file" id="rom-file" accept=".nes,.sfc,.smc">
+
+    <div id="game-area"></div>
+
+    <div class="controls-panel">
+        <h3>Guía de Controles por Defecto (Teclado)</h3>
+        <div class="controls-grid">
+            
+            <!-- Controles NES -->
+            <div class="console-box">
+                <h4>NES (8-bits)</h4>
+                <div class="control-row"><span>Moverse (D-Pad)</span> <span class="key">Flechas</span></div>
+                <div class="control-row"><span>Botón A</span> <span class="key">X</span></div>
+                <div class="control-row"><span>Botón B</span> <span class="key">Z</span></div>
+                <div class="control-row"><span>Start</span> <span class="key">Enter</span></div>
+                <div class="control-row"><span>Select</span> <span class="key">Shift Izq</span></div>
+            </div>
+
+            <!-- Controles SNES -->
+            <div class="console-box">
+                <h4>Super Nintendo (SNES)</h4>
+                <div class="control-row"><span>Moverse (D-Pad)</span> <span class="key">Flechas</span></div>
+                <div class="control-row"><span>Botones A / B</span> <span class="key">X</span> / <span class="key">Z</span></div>
+                <div class="control-row"><span>Botones X / Y</span> <span class="key">S</span> / <span class="key">A</span></div>
+                <div class="control-row"><span>Gatillos L / R</span> <span class="key">Q</span> / <span class="key">W</span></div>
+                <div class="control-row"><span>Start / Select</span> <span class="key">Enter</span> / <span class="key">Shift</span></div>
+            </div>
+
+        </div>
+        <p style="font-size: 0.8rem; color: #888; margin-top: 15px; text-align: center;">
+            * Nota: Puedes cambiar estos controles o conectar un mando USB/Bluetooth haciendo clic en el icono de engranaje (⚙️) dentro del juego.
+        </p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('rom-file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const fileName = file.name.toLowerCase();
+        let core = 'nes';
+
+        if (fileName.endsWith('.sfc') || fileName.endsWith('.smc')) {
+            core = 'snes';
+        } else if (fileName.endsWith('.nes')) {
+            core = 'nes';
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const container = document.getElementById('game-area');
+            container.innerHTML = '';
+
+            const displayDiv = document.createElement('div');
+            displayDiv.id = 'display';
+            displayDiv.style.width = '100%';
+            displayDiv.style.height = '100%';
+            container.appendChild(displayDiv);
+
+            window.EJS_player = '#display';
+            window.EJS_core = core;
+            window.EJS_gameName = file.name;
+            window.EJS_gameUrl = evt.target.result;
+            window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+
+            const script = document.createElement('script');
+            script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+            document.body.appendChild(script);
+        };
+        reader.readAsDataURL(file);
+    });
+</script>
+
+</body>
+</html>
